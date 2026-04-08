@@ -62,9 +62,9 @@ export const AIChatView = ({ messages, tasks, addMessage }: AIChatProps) => {
         <h2 className="editorial-lead text-on-surface text-3xl">Ask <span className="text-primary/60">Aura.</span></h2>
       </header>
 
-      <div className="flex-1 flex flex-col min-h-0 glass rounded-3xl overflow-hidden border-outline-variant/10 shadow-ambient">
+      <div className="flex-1 flex flex-col min-h-0 glass rounded-3xl overflow-hidden border-outline-variant/10 shadow-ambient mb-4">
         <ScrollArea className="flex-1 p-6" ref={scrollRef}>
-          <div className="space-y-8 pb-4">
+          <div className="space-y-8 pb-32">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center min-h-[300px] text-center space-y-6">
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center shadow-inner">

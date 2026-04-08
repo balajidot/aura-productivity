@@ -10,7 +10,6 @@ const getGeminiClient = () => {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (process as any).env?.GEMINI_API_KEY;
   
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey === "") {
-    console.warn("Gemini API Key is missing or invalid.");
     return null;
   }
   
@@ -19,7 +18,6 @@ const getGeminiClient = () => {
 };
 
 const getNvidiaApiKey = () => {
-  // Try multiple source options to ensure Vercel compatibility
   return (import.meta as any).env?.VITE_NVIDIA_API_KEY || (process as any).env?.NVIDIA_API_KEY || "";
 };
 
@@ -27,11 +25,9 @@ const getNvidiaApiKey = () => {
 const getNvidiaAIResponse = async (messages: any[], jsonMode = false) => {
   const apiKey = getNvidiaApiKey();
   if (!apiKey || apiKey === "YOUR_NVIDIA_API_KEY" || apiKey === "") {
-    console.error("NVIDIA API Key is missing. Please add it to Vercel/Local env.");
-    throw new Error("NVIDIA API Key is missing.");
+    throw new Error("NVIDIA_API_KEY_MISSING");
   }
 
-  // We'll try the most capable model first
   const tryModel = async (modelName: string) => {
     const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
       method: "POST",
@@ -51,7 +47,7 @@ const getNvidiaAIResponse = async (messages: any[], jsonMode = false) => {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      throw new Error(`NVIDIA AI error [${modelName}]: ${response.status} ${errorBody}`);
+      throw new Error(`NVIDIA_ERROR: ${response.status} ${errorBody}`);
     }
 
     const data = await response.json();
@@ -60,14 +56,14 @@ const getNvidiaAIResponse = async (messages: any[], jsonMode = false) => {
 
   try {
     return await tryModel("meta/llama-3.1-405b-instruct");
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === "NVIDIA_API_KEY_MISSING") throw error;
     console.warn("NVIDIA 405B failed, trying 70B fallback:", error);
     return await tryModel("meta/llama-3.1-70b-instruct");
   }
 };
 
 export const extractTaskFromText = async (text: string): Promise<Partial<Task> | null> => {
-  // Try Gemini first
   try {
     const ai = getGeminiClient();
     if (ai) {
@@ -93,23 +89,16 @@ export const extractTaskFromText = async (text: string): Promise<Partial<Task> |
       return JSON.parse(response.response.text());
     }
   } catch (error) {
-    console.error("Gemini extraction failed:", error);
+    console.error("Gemini failed, trying NVIDIA...");
   }
 
-  // Fallback to NVIDIA
   try {
     const nvidiaResponse = await getNvidiaAIResponse([
-      { 
-        role: "system", 
-        content: `Extract task details from the provided text. Return ONLY valid JSON.
-        Current date/time: ${new Date().toISOString()}.
-        JSON format: { "title": string, "date": "ISO string", "priority": "low"|"medium"|"high", "category": "work"|"personal"|"health" }` 
-      },
+      { role: "system", content: "Extract task details as JSON." },
       { role: "user", content: text }
     ], true);
     return JSON.parse(nvidiaResponse);
   } catch (error) {
-    console.error("All AI extractions failed:", error);
     return null;
   }
 };
@@ -121,7 +110,7 @@ export const getAIChatResponse = async (messages: { role: string, content: strin
     Current tasks:\n${taskContext}\n
     Keep responses concise, helpful, and encouraging. Use a professional yet warm tone.`;
 
-  // Try Gemini first
+  let geminiError = "";
   try {
     const ai = getGeminiClient();
     if (ai) {
@@ -131,20 +120,28 @@ export const getAIChatResponse = async (messages: { role: string, content: strin
         contents: messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })),
       });
       return response.response.text();
+    } else {
+      geminiError = "GEMINI_KEY_MISSING";
     }
-  } catch (error) {
-    console.error("Gemini chat failed:", error);
+  } catch (error: any) {
+    geminiError = error.message || "GEMINI_UNKNOWN_ERROR";
+    console.error("Gemini failed:", error);
   }
 
-  // Fallback to NVIDIA
   try {
     return await getNvidiaAIResponse([
       { role: "system", content: systemPrompt },
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ]);
-  } catch (error) {
-    console.error("All AI chat providers failed. Diagnostic: Ensure NVIDIA_API_KEY is in Vercel env settings.", error);
-    return "I'm sorry, I'm having trouble connecting to all my AI systems right now. Please check your API keys (Gemini/NVIDIA) in your settings or try again later.";
+  } catch (error: any) {
+    console.error("NVIDIA failed:", error);
+    if (geminiError === "GEMINI_KEY_MISSING" && error.message === "NVIDIA_API_KEY_MISSING") {
+      return "[STATUS: MISSING_KEYS] I'm sorry, both Gemini and NVIDIA API keys are missing. Please add them to your Vercel/Local settings and Redeploy.";
+    }
+    if (error.message === "NVIDIA_API_KEY_MISSING") {
+      return `[STATUS: NVIDIA_KEY_MISSING] Gemini failed with: ${geminiError.substring(0, 50)}. Please check your NVIDIA_API_KEY as a fallback.`;
+    }
+    return `[STATUS: ERROR] Both AI providers are currently unavailable. Gemini: ${geminiError.substring(0, 30)}... NVIDIA: ${error.message.substring(0, 30)}...`;
   }
 };
 
@@ -152,7 +149,6 @@ export const getWeeklyInsights = async (tasks: Task[]) => {
   const taskSummary = tasks.map(t => `${t.title}: ${t.status}`).join(', ');
   const prompt = `Analyze these tasks and provide a brief productivity insight (2-3 sentences): ${taskSummary}`;
 
-  // Try Gemini first
   try {
     const ai = getGeminiClient();
     if (ai) {
@@ -161,17 +157,15 @@ export const getWeeklyInsights = async (tasks: Task[]) => {
       return response.response.text();
     }
   } catch (error) {
-    console.error("Gemini insights failed:", error);
+    console.error("Gemini insights failed, trying NVIDIA...");
   }
 
-  // Fallback to NVIDIA
   try {
     return await getNvidiaAIResponse([
-      { role: "system", content: "You are a productivity expert giving brief, insightful feedback." },
+      { role: "system", content: "Analyze productivity." },
       { role: "user", content: prompt }
     ]);
   } catch (error) {
-    console.error("All AI insight providers failed:", error);
-    return "Keep pushing forward! Every small step counts towards your goals.";
+    return "Keep pushing forward! (AI Insights temporarily unavailable)";
   }
 };

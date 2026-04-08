@@ -24,7 +24,8 @@
     "noEmit": true,
     "types": [
       "node",
-      "vite/client"
+      "vite/client",
+      "@tailwindcss/vite"
     ]
   }
 }
