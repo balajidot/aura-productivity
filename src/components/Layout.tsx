@@ -19,7 +19,7 @@ export const Layout = ({ children, activeTab, setActiveTab }: LayoutProps) => {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-surface text-on-surface max-w-md mx-auto relative overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] bg-surface text-on-surface max-w-md mx-auto relative overflow-hidden font-sans">
       {/* Premium Background Asset */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.15] scale-105">
         <img 
@@ -47,7 +47,7 @@ export const Layout = ({ children, activeTab, setActiveTab }: LayoutProps) => {
         </header>
         
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto px-6 pb-8 no-scrollbar scroll-smooth">
+        <main className="flex-1 overflow-hidden px-6 relative">
           {children}
         </main>
 

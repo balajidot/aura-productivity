@@ -56,24 +56,24 @@ export const AIChatView = ({ messages, tasks, addMessage }: AIChatProps) => {
   };
 
   return (
-    <div className="flex flex-col flex-1 py-4 h-full relative">
-      <header className="mb-4 space-y-1">
+    <div className="flex flex-col h-full py-4 min-h-0">
+      <header className="mb-4 space-y-1 shrink-0">
         <p className="text-primary font-display font-bold uppercase tracking-[0.2em] text-[10px]">Neural Sync</p>
         <h2 className="editorial-lead text-on-surface text-3xl">Ask <span className="text-primary/60">Aura.</span></h2>
       </header>
 
-      <div className="flex-1 flex flex-col glass rounded-3xl overflow-hidden border-outline-variant/10 shadow-ambient">
+      <div className="flex-1 flex flex-col min-h-0 glass rounded-3xl overflow-hidden border-outline-variant/10 shadow-ambient">
         <ScrollArea className="flex-1 p-6" ref={scrollRef}>
           <div className="space-y-8 pb-4">
             {messages.length === 0 && (
-              <div className="text-center py-20 space-y-6">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="flex flex-col items-center justify-center min-h-[300px] text-center space-y-6">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center shadow-inner">
                   <Bot size={40} className="text-primary/60" strokeWidth={1.5} />
                 </div>
-                <div className="space-y-2 max-w-xs mx-auto">
+                <div className="space-y-4 max-w-[240px] mx-auto">
                   <p className="text-on-surface font-display font-bold text-lg">Aura Intelligence</p>
-                  <p className="text-xs text-on-surface-variant/40 leading-relaxed">
-                    Synchronize your goals. Ask me to optimize your schedule or distill complex tasks.
+                  <p className="text-[10px] text-on-surface-variant/40 leading-relaxed uppercase tracking-widest font-bold">
+                    Synchronize your goals. Ask me to optimize your schedule or distill tasks.
                   </p>
                 </div>
               </div>
