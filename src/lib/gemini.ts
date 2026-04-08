@@ -35,8 +35,8 @@ export const extractTaskFromText = async (text: string): Promise<Partial<Task> |
           properties: {
             title: { type: SchemaType.STRING },
             date: { type: SchemaType.STRING },
-            priority: { type: SchemaType.STRING, enum: ['low', 'medium', 'high'] },
-            category: { type: SchemaType.STRING, enum: ['work', 'personal', 'health'] },
+            priority: { type: SchemaType.STRING, enum: ['low', 'medium', 'high'], format: "enum" },
+            category: { type: SchemaType.STRING, enum: ['work', 'personal', 'health'], format: "enum" },
           },
           required: ["title", "date"]
         }
