@@ -1,8 +1,8 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Task } from "../types";
 
 // Lazy-initialize the AI client to prevent top-level crashes
-let genAI: GoogleGenAI | null = null;
+let genAI: GoogleGenerativeAI | null = null;
 
 const getAIClient = () => {
   if (genAI) return genAI;
@@ -14,7 +14,7 @@ const getAIClient = () => {
     return null;
   }
   
-  genAI = new GoogleGenAI(apiKey);
+  genAI = new GoogleGenerativeAI(apiKey);
   return genAI;
 };
 
@@ -31,12 +31,12 @@ export const extractTaskFromText = async (text: string): Promise<Partial<Task> |
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: SchemaType.OBJECT,
           properties: {
-            title: { type: Type.STRING },
-            date: { type: Type.STRING },
-            priority: { type: Type.STRING, enum: ['low', 'medium', 'high'] },
-            category: { type: Type.STRING, enum: ['work', 'personal', 'health'] },
+            title: { type: SchemaType.STRING },
+            date: { type: SchemaType.STRING },
+            priority: { type: SchemaType.STRING, enum: ['low', 'medium', 'high'] },
+            category: { type: SchemaType.STRING, enum: ['work', 'personal', 'health'] },
           },
           required: ["title", "date"]
         }
