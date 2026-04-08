@@ -23,7 +23,7 @@ export const extractTaskFromText = async (text: string): Promise<Partial<Task> |
     const ai = getAIClient();
     if (!ai) return null;
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1' });
     const response = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `Extract task details from this text: "${text}". 
       Current date/time: ${new Date().toISOString()}.
@@ -56,7 +56,7 @@ export const getAIChatResponse = async (messages: { role: string, content: strin
     if (!ai) return "AI features are currently unavailable. Please check your API key.";
 
     const taskContext = tasks.map(t => `- ${t.title} (${t.date}, ${t.priority}, ${t.status})`).join('\n');
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1' });
     
     const response = await model.generateContent({
       systemInstruction: `You are Aura, an intelligent productivity assistant. 
@@ -79,7 +79,7 @@ export const getWeeklyInsights = async (tasks: Task[]) => {
     if (!ai) return "Start adding tasks to see your AI-powered performance insights!";
 
     const taskSummary = tasks.map(t => `${t.title}: ${t.status}`).join(', ');
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: 'v1' });
     
     const response = await model.generateContent(`Analyze these tasks and provide a brief productivity insight (2-3 sentences): ${taskSummary}`);
     return response.response.text();
