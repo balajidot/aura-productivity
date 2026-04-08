@@ -56,10 +56,10 @@ export const AIChatView = ({ messages, tasks, addMessage }: AIChatProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] py-6">
-      <header className="mb-8 space-y-1">
+    <div className="flex flex-col flex-1 py-4 h-full relative">
+      <header className="mb-4 space-y-1">
         <p className="text-primary font-display font-bold uppercase tracking-[0.2em] text-[10px]">Neural Sync</p>
-        <h2 className="editorial-lead text-on-surface">Ask <br /> <span className="text-primary/60">Aura.</span></h2>
+        <h2 className="editorial-lead text-on-surface text-3xl">Ask <span className="text-primary/60">Aura.</span></h2>
       </header>
 
       <div className="flex-1 flex flex-col glass rounded-3xl overflow-hidden border-outline-variant/10 shadow-ambient">
