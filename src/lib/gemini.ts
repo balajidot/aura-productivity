@@ -9,8 +9,8 @@ const getGeminiClient = () => {
   
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (process as any).env?.GEMINI_API_KEY;
   
-  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-    console.warn("Gemini API Key is missing.");
+  if (!apiKey || apiKey === "MY_GEMINI_API_KEY" || apiKey === "") {
+    console.warn("Gemini API Key is missing or invalid.");
     return null;
   }
   
@@ -19,39 +19,51 @@ const getGeminiClient = () => {
 };
 
 const getNvidiaApiKey = () => {
-  return (import.meta as any).env?.VITE_NVIDIA_API_KEY || (process as any).env?.NVIDIA_API_KEY;
+  // Try multiple source options to ensure Vercel compatibility
+  return (import.meta as any).env?.VITE_NVIDIA_API_KEY || (process as any).env?.NVIDIA_API_KEY || "";
 };
 
 // Helper for NVIDIA AI API (OpenAI compatible)
 const getNvidiaAIResponse = async (messages: any[], jsonMode = false) => {
   const apiKey = getNvidiaApiKey();
-  if (!apiKey || apiKey === "YOUR_NVIDIA_API_KEY") {
+  if (!apiKey || apiKey === "YOUR_NVIDIA_API_KEY" || apiKey === "") {
+    console.error("NVIDIA API Key is missing. Please add it to Vercel/Local env.");
     throw new Error("NVIDIA API Key is missing.");
   }
 
-  const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "meta/llama-3.1-405b-instruct",
-      messages: messages,
-      temperature: 0.2,
-      top_p: 0.7,
-      max_tokens: 1024,
-      response_format: jsonMode ? { type: "json_object" } : undefined
-    })
-  });
+  // We'll try the most capable model first
+  const tryModel = async (modelName: string) => {
+    const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: messages,
+        temperature: 0.2,
+        top_p: 0.7,
+        max_tokens: 1024,
+        response_format: jsonMode ? { type: "json_object" } : undefined
+      })
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`NVIDIA AI error: ${response.status} ${errorBody}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`NVIDIA AI error [${modelName}]: ${response.status} ${errorBody}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  };
+
+  try {
+    return await tryModel("meta/llama-3.1-405b-instruct");
+  } catch (error) {
+    console.warn("NVIDIA 405B failed, trying 70B fallback:", error);
+    return await tryModel("meta/llama-3.1-70b-instruct");
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
 };
 
 export const extractTaskFromText = async (text: string): Promise<Partial<Task> | null> => {
@@ -81,7 +93,7 @@ export const extractTaskFromText = async (text: string): Promise<Partial<Task> |
       return JSON.parse(response.response.text());
     }
   } catch (error) {
-    console.warn("Gemini extraction failed, falling back to NVIDIA:", error);
+    console.error("Gemini extraction failed:", error);
   }
 
   // Fallback to NVIDIA
@@ -121,7 +133,7 @@ export const getAIChatResponse = async (messages: { role: string, content: strin
       return response.response.text();
     }
   } catch (error) {
-    console.warn("Gemini chat failed, falling back to NVIDIA:", error);
+    console.error("Gemini chat failed:", error);
   }
 
   // Fallback to NVIDIA
@@ -131,8 +143,8 @@ export const getAIChatResponse = async (messages: { role: string, content: strin
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ]);
   } catch (error) {
-    console.error("All AI chat providers failed:", error);
-    return "I'm sorry, I'm having trouble connecting to all my AI systems right now. Please check your API keys or try again later.";
+    console.error("All AI chat providers failed. Diagnostic: Ensure NVIDIA_API_KEY is in Vercel env settings.", error);
+    return "I'm sorry, I'm having trouble connecting to all my AI systems right now. Please check your API keys (Gemini/NVIDIA) in your settings or try again later.";
   }
 };
 
@@ -149,7 +161,7 @@ export const getWeeklyInsights = async (tasks: Task[]) => {
       return response.response.text();
     }
   } catch (error) {
-    console.warn("Gemini insights failed, falling back to NVIDIA:", error);
+    console.error("Gemini insights failed:", error);
   }
 
   // Fallback to NVIDIA
