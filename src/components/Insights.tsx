@@ -89,7 +89,7 @@ export const InsightsView = ({ tasks }: InsightsProps) => {
         <section className="space-y-6">
           <h3 className="text-[10px] font-display font-bold text-on-surface-variant/40 uppercase tracking-widest text-center px-4">Registry Allocation</h3>
           <div className="h-64 w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={data}
@@ -129,7 +129,7 @@ export const InsightsView = ({ tasks }: InsightsProps) => {
         <section className="space-y-6">
           <h3 className="text-[10px] font-display font-bold text-on-surface-variant/40 uppercase tracking-widest px-4">Category Metrics</h3>
           <div className="h-64 w-full bg-surface-low/20 rounded-3xl p-6 border border-outline-variant/5">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart data={categoryData}>
                 <XAxis 
                   dataKey="name" 
